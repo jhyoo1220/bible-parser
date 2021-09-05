@@ -1,0 +1,248 @@
+<html>
+	<script src="https://code.jquery.com/jquery-3.1.1.min.js"
+		integrity="sha256-hVVnYaiADRTO2PzUGmuLJr8BLUSjGIZsDYGmIJLv2b8="
+		crossorigin="anonymous"></script>
+	<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"
+		integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa"
+		crossorigin="anonymous"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/mustache.js/2.3.0/mustache.min.js"
+		integrity="sha384-wlIoxluAn4R0ncWYWAibi4AATy1rxh4LzxfPhzhRfBwpYzbAQT7FDApW3TTf4KC+"
+		crossorigin="anonymous"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/1.6.0/clipboard.min.js"
+		integrity="sha384-o+v6ZDbtVjXVRgufA7W/BjTyhhLwWB6fBjDhHbKHHKXywJtgFD0lNG7FFhPYo1uS"
+		crossorigin="anonymous"></script>
+	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css"
+		integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u"
+		crossorigin="anonymous">
+
+	<script type="text/javascript">
+	$(document).ready(function () {
+		$("#text_input_modal").modal('show');
+		init_copy_clipboard();
+
+		$('#text_input_button').click(function () {
+			$("#text_input_modal").modal('hide');
+			$('#please_wait_text').html('텍스트 분석 중...');
+			$("#please_wait_modal").modal('show');
+
+			$.getJSON('/_parse_message', {
+				message: $('#input_message').val()
+			}, function (data) {
+				$("#please_wait_modal").modal('hide');
+				build_verse_list(data.result);
+			});
+			return false;
+		});
+
+		$(document).on('click', '.bible_verse_class', function() {
+			var selected_verse = $(this).data("bible_verse");
+			var remove_annotation = false;
+			if ($('#remove_annotation').is(':checked'))
+				remove_annotation = true;
+			
+			$('#please_wait_text').html('말씀 조회중...');
+			$("#please_wait_modal").modal('show');
+
+			$.getJSON('/_show_bible_text', {
+				bible_word: selected_verse,
+				remove_annotation: remove_annotation
+			}, function (data) {
+				$("#please_wait_modal").modal('hide');
+				show_word(selected_verse, data.result, null);
+			});
+			return false;
+		});
+
+		$('#add_bible_verse').click(function () {
+			var selected_verse = $('#new_book').val() + ' ' + $('#new_bible_verse').val();
+			var remove_annotation = false;
+			if ($('#remove_annotation').is(':checked'))
+				remove_annotation = true;
+
+			$('#please_wait_text').html('말씀 조회중...');
+			$("#please_wait_modal").modal('show');
+
+			$.getJSON('/_show_bible_text', {
+				bible_word: selected_verse,
+				remove_annotation: remove_annotation
+			}, function (data) {
+				$("#please_wait_modal").modal('hide');
+				show_word(selected_verse, data.result, selected_verse);
+			});
+			return false;
+		});
+		
+		$('#download_pptx_file').click(function () {
+			var selected_verse = $('#word_modal_title').html();
+			var remove_annotation = false;
+			if ($('#remove_annotation').is(':checked'))
+				remove_annotation = true;
+				
+			var pptx_url = '/_build_pptx_file?bible_word=' + selected_verse
+							+ '&remove_annotation=' + remove_annotation;
+			window.open(pptx_url, '_blank');
+			
+			return false;
+		});
+	});
+
+	function build_verse_list(verse_list) {
+		{% raw %}
+		var templ_content = '{{#verse_list}}';
+        templ_content += '<a href="javascript:void(0)" class="list-group-item '
+        			+ 'list-group-item-action bible_verse_class" '
+        			+ 'data-bible_verse="{{.}}">{{.}}</a>';
+        templ_content += '{{/verse_list}}';
+        {% endraw %}
+        var content = Mustache.render(templ_content, {
+            verse_list: verse_list
+        });
+
+        $('#bible_verse_list').html(content);
+	}
+
+	function add_verse_list(new_verse) {
+		{% raw %}
+		var templ_content = '<a href="javascript:void(0)" class="list-group-item '
+        			+ 'list-group-item-action bible_verse_class" '
+        			+ 'data-bible_verse="{{new_verse}}">{{new_verse}}</a>';
+        {% endraw %}
+        var content = Mustache.render(templ_content, {
+            new_verse: new_verse
+        });
+
+        $('#bible_verse_list').append(content);
+	}
+
+	function show_word(selected_verse, result, new_verse) {
+		if (result.localeCompare('Error') == 0) {
+			alert('올바른 말씀형태가 아닙니다. 다음과 같은 형태를 입력해 주세요:\n누가복음 3:3,5-12');
+		} else {
+			if (new_verse != null)
+				add_verse_list(new_verse);
+
+			$('#bible_word_text').val(result);
+			$('#word_modal_title').html(selected_verse);
+			$("#word_modal").modal('show');
+		}
+	}
+
+	function init_copy_clipboard() {
+		new Clipboard('.btn_clipboard');
+	}
+	</script>
+	<head>
+		<title>물댄동산교회 말씀조회</title>
+	</head>
+	<body>
+		<div class="panel panel-primary">
+			<div class="panel-heading">
+				말씀 구절 | 
+				<label class="checkbox-inline">
+					<input type="checkbox" id="remove_annotation">주석 제거
+				</label>
+			</div>
+			
+			<div class="panel-body" style="max-height: 300;overflow-y: scroll;">
+				<div class="list-group" id="bible_verse_list">
+				</div>
+			</div>
+		</div>
+
+		<div class="col-sm-12">
+			<div class="col-sm-2" style="padding-left: 0">
+	            <select id="new_book" name="new_book" class="form-control">
+	                {% for value in bible_books %}
+	                    <option value={{ value }}>{{ value }}</option>
+	                {% endfor %}
+	            </select>
+	        </div>
+			<div class="col-sm-8">
+				<input type="text" class="form-control" id="new_bible_verse"
+					placeholder="장과 절을 입력해주세요. 예) 3:3,5-12">
+			</div>
+			<div class="col-sm-2">
+				<button type="button" class="btn btn-primary btn-md" id="add_bible_verse">추가 및 조회</button>
+			</div>
+		</div>
+
+		<!-- Modal -->
+		<div class="modal fade" id="text_input_modal" tabindex="-1" role="dialog" aria-hidden="true"
+			data-backdrop="static">
+			<div class="modal-dialog" role="document">
+				<div class="modal-content">
+					<div class="modal-header">
+						<h5 class="modal-title">성경구절 포함 텍스트</h5>
+					</div>
+
+					<div class="modal-body">
+						<div class="form-group">
+							<label for="comment">성경구절이 포함된 텍스트를 입력해주세요:</label>
+							<textarea class="form-control" rows="10" id="input_message"></textarea>
+						</div>
+					</div>
+
+					<div class="modal-footer">
+						<button type="button" class="btn btn-secondary" data-dismiss="modal">닫기</button>
+						<button type="button" class="btn btn-primary" id="text_input_button">입력</button>
+					</div>
+				</div>
+			</div>
+		</div>
+
+		<!-- Modal -->
+		<div class="modal fade" id="word_modal" tabindex="-1" role="dialog" aria-hidden="true">
+			<div class="modal-dialog" role="document">
+				<div class="modal-content">
+					<div class="modal-header">
+						<h5 class="modal-title" id="word_modal_title">성경구절</h5>
+					</div>
+
+					<div class="modal-body">
+						<div class="form-group">
+							<textarea class="form-control" rows="10" id="bible_word_text" readonly></textarea>
+						</div>
+					</div>
+
+					<div class="modal-footer">
+						<div class="pull-right">
+							<button type="button" class="btn btn-secondary pull-left" id="download_pptx_file">
+								PPT 받기
+							</button>
+							<button type="button" class="btn btn-secondary btn_clipboard pull-left"
+								data-clipboard-action="copy" data-clipboard-target="#bible_word_text"
+								data-dismiss="modal">
+								복사 후 닫기
+							</button>
+							<button type="button" class="btn btn-secondary pull-left" data-dismiss="modal">
+								닫기
+							</button>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+
+		<!-- Modal Start here-->
+	    <div class="modal fade bs-example-modal-sm" id="please_wait_modal" tabindex="-1"
+	        role="dialog" aria-hidden="true" data-backdrop="static">
+	        <div class="modal-dialog modal-sm">
+	            <div class="modal-content">
+	                <div class="modal-header">
+	                    <h4 class="modal-title">
+	                        <span class="glyphicon"></span>
+	                        <label id="please_wait_text">말씀 조회중...</label>
+	                     </h4>
+	                </div>
+	                <div class="modal-body">
+	                    <div class="progress">
+	                        <div class="progress-bar progress-bar-striped active" style="width: 100%">
+	                        </div>
+	                    </div>
+	                </div>
+	            </div>
+	        </div>
+	    </div>
+	    <!-- Modal ends Here -->
+	</body>
+</html>
