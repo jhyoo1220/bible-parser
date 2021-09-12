@@ -19,7 +19,8 @@ class FileUtil(object):
 
     @staticmethod
     def remove_directory(target_dir):
-        shutil.rmtree(target_dir)
+        if os.path.exists(target_dir):
+            shutil.rmtree(target_dir)
 
     @staticmethod
     def remove_file(target_file):

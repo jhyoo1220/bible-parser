@@ -1,5 +1,5 @@
 from copy import deepcopy
-from file_util import FileUtil
+from bible_parser.file_util import FileUtil
 import os
 import time
 

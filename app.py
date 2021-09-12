@@ -1,8 +1,9 @@
 import codecs
 import io
 from flask import Flask, request, render_template, jsonify, send_from_directory
-from bible_parser.book_chapter_verse_extractor import BookChapterVerseExtractor
 from bible_parser.bible_reader import BibleReader, KOR_BOOK_TO_ENG
+from bible_parser.book_chapter_verse_extractor import BookChapterVerseExtractor
+from bible_parser.file_util import FileUtil
 from bible_parser.pptx_builder import PPTX_OUTPUT_DIR, PPTXBuilder
 from datetime import datetime
 
@@ -46,10 +47,10 @@ def get_bible_text(bible_word, b_remove_annotation):
     }
     text_list = []
     for verse in verse_list:
-        verst_str = str(verse)
+        verse_str = str(verse)
         curr_text = {
-            'text_kor': kor_text.get(verst_str),
-            'text_eng': eng_text.get(verst_str),
+            'text_kor': f"{verse_str}. {kor_text.get(verse_str)}",
+            'text_eng': f"{verse_str}. {eng_text.get(verse_str)}",
         }
         text_list.append(curr_text)
     bible_text['text_list'] = text_list
@@ -58,7 +59,7 @@ def get_bible_text(bible_word, b_remove_annotation):
 
 @app.route("/")
 def get_main_page():
-    kor_books = KOR_BOOK_TO_ENG.keys()
+    kor_books = list(KOR_BOOK_TO_ENG.keys())
     kor_books.sort()
 
     return render_template("index.html", bible_books=kor_books)
@@ -80,7 +81,7 @@ def parse_message():
         extracted_verses = extractor.extract_verses(chapter_verse)
 
         if book_fullname is not None and extracted_chapter > 0 and len(extracted_verses) > 0:
-            curr_result = f"{book_fullname} {extracted_chapter}:{extracted_verses}"
+            curr_result = f"{book_fullname} {chapter_verse}"
             results.append(curr_result)
 
     return jsonify(result=results)
@@ -91,8 +92,12 @@ def show_bible_text():
     b_remove_annotation = True if request.args.get('remove_annotation') == 'true' else False
 
     bible_text = get_bible_text(bible_word, b_remove_annotation)
+    content = bible_word
+    for text in bible_text['text_list']:
+        content += "\n" + text['text_kor']
+        content += "\n" + text['text_eng']
 
-    return jsonify(result=bible_text)
+    return jsonify(result=content)
 
 @app.route("/_build_pptx_file")
 def build_pptx_file():
@@ -101,6 +106,7 @@ def build_pptx_file():
 
     bible_text = get_bible_text(bible_word, b_remove_annotation)
 
+    FileUtil.remove_directory(PPTX_OUTPUT_DIR)
     output_filename = PPTXBuilder.build(**bible_text)
 
     return send_from_directory(PPTX_OUTPUT_DIR, output_filename, as_attachment=True)
