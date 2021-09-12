@@ -58,7 +58,7 @@ def get_bible_text(bible_word, b_remove_annotation):
 
 @app.route("/")
 def get_main_page():
-    kor_books = KOR_BOOK_TO_ENG.keys()
+    kor_books = list(KOR_BOOK_TO_ENG.keys())
     kor_books.sort()
 
     return render_template("index.html", bible_books=kor_books)
