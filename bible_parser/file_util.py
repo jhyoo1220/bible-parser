@@ -59,13 +59,3 @@ class FileUtil(object):
     @staticmethod
     def get_file_created_time(filename):
         return os.path.getmtime(filename)
-
-if __name__ == '__main__':
-    src_dir = './pptx/base'
-    dest_dir = './pptx/temp'
-    dest_file = './pptx/temp'
-    dest_pptx = './pptx/temp.pptx'
-    
-    FileUtil.copy_directory(src_dir, dest_dir)
-    FileUtil.zip_directory(dest_dir, dest_file)
-    FileUtil.rename_file(dest_file + '.zip', dest_pptx)

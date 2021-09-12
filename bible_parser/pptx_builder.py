@@ -17,8 +17,8 @@ REPLACEMENT_POS = "replacement_position"
 
 class PPTXBuilder(object):
 	@classmethod
-	def build(cls, book_kor, book_eng, chapter_verse, text_info_list):
-		if text_info_list is None or len(text_info_list) <= 0:
+	def build(cls, book_kor, book_eng, chapter_verse, text_list):
+		if text_list is None or len(text_list) <= 0:
 			return PPTX_DATA_ERROR_FILE
 
 		output_filename = str(time.time())
@@ -26,7 +26,7 @@ class PPTXBuilder(object):
 
 		FileUtil.copy_directory(PPTX_DATA_BASE, working_dir)
 
-		no_slides = len(text_info_list)
+		no_slides = len(text_list)
 
 		content_types_content = cls.build_content_types(no_slides)
 		FileUtil.write_file_content(content_types_content, f"{working_dir}/[Content_Types].xml")
@@ -42,7 +42,7 @@ class PPTXBuilder(object):
 			'book_eng': book_eng,
 			'chapter_verse': chapter_verse,
 		}
-		for idx, curr_text_info in enumerate(text_info_list):
+		for idx, curr_text_info in enumerate(text_list):
 			slide_info = deepcopy(base_slide_info)
 			slide_info['text_kor'] = curr_text_info['text_kor']
 			slide_info['text_eng'] = curr_text_info['text_eng']
@@ -60,10 +60,11 @@ class PPTXBuilder(object):
 		FileUtil.remove_directory(working_dir)
 
 		chapter_verse_filename = chapter_verse.replace(':', '_')
-		output_pptx_filename = f"{PPTX_OUTPUT_DIR}/{book_eng} {chapter_verse_filename}.pptx"
-		FileUtil.rename_file(f"{working_dir}.zip", output_pptx_filename)
+		output_filename = f"{book_eng} {chapter_verse_filename}.pptx"
+		output_full_path = f"{PPTX_OUTPUT_DIR}/{output_filename}"
+		FileUtil.rename_file(f"{working_dir}.zip", output_full_path)
 
-		return output_pptx_filename
+		return output_filename
 
 	@classmethod
 	def build_content_types(cls, no_slides):
@@ -119,7 +120,7 @@ if __name__ == '__main__':
 	book_kor = "잠언"
 	book_eng = "Proverbs"
 	chapter_verse = "18:12,13"
-	text_info_list = [
+	text_list = [
 		{
 			'text_kor': "12. 사람의 마음의 교만은 멸망의 선봉이요 겸손은 존귀의 길잡이니라",
 			'text_eng': "12. Before a downfall the heart is haughty, but humility comes before honor.",
@@ -134,8 +135,8 @@ if __name__ == '__main__':
 		book_kor=book_kor,
 		book_eng=book_eng,
 		chapter_verse=chapter_verse,
-		text_kor=text_info_list[0]['text_kor'],
-		text_eng=text_info_list[0]['text_eng'],
+		text_kor=text_list[0]['text_kor'],
+		text_eng=text_list[0]['text_eng'],
 	)
 
 	print(result)
@@ -144,7 +145,7 @@ if __name__ == '__main__':
 		book_kor=book_kor,
 		book_eng=book_eng,
 		chapter_verse=chapter_verse,
-		text_info_list=text_info_list,
+		text_list=text_list,
 	)
 
 	print(output_filename)
