@@ -1,8 +1,9 @@
 import codecs
 import io
 from flask import Flask, request, render_template, jsonify, send_from_directory
-from bible_parser.book_chapter_verse_extractor import BookChapterVerseExtractor
 from bible_parser.bible_reader import BibleReader, KOR_BOOK_TO_ENG
+from bible_parser.book_chapter_verse_extractor import BookChapterVerseExtractor
+from bible_parser.file_util import FileUtil
 from bible_parser.pptx_builder import PPTX_OUTPUT_DIR, PPTXBuilder
 from datetime import datetime
 
@@ -105,6 +106,7 @@ def build_pptx_file():
 
     bible_text = get_bible_text(bible_word, b_remove_annotation)
 
+    FileUtil.remove_directory(PPTX_OUTPUT_DIR)
     output_filename = PPTXBuilder.build(**bible_text)
 
     return send_from_directory(PPTX_OUTPUT_DIR, output_filename, as_attachment=True)
