@@ -91,8 +91,12 @@ def show_bible_text():
     b_remove_annotation = True if request.args.get('remove_annotation') == 'true' else False
 
     bible_text = get_bible_text(bible_word, b_remove_annotation)
+    content = bible_word
+    for text in bible_text['text_list']:
+        content += "\n" + text['text_kor']
+        content += "\n" + text['text_eng']
 
-    return jsonify(result=bible_text)
+    return jsonify(result=content)
 
 @app.route("/_build_pptx_file")
 def build_pptx_file():
