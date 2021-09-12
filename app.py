@@ -80,7 +80,7 @@ def parse_message():
         extracted_verses = extractor.extract_verses(chapter_verse)
 
         if book_fullname is not None and extracted_chapter > 0 and len(extracted_verses) > 0:
-            curr_result = book_fullname + " " + str(extracted_chapter) + ":" + str(extracted_verses)
+            curr_result = f"{book_fullname} {chapter_verse}"
             results.append(curr_result)
 
     return jsonify(result=results)
