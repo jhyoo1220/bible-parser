@@ -46,10 +46,10 @@ def get_bible_text(bible_word, b_remove_annotation):
     }
     text_list = []
     for verse in verse_list:
-        verst_str = str(verse)
+        verse_str = str(verse)
         curr_text = {
-            'text_kor': kor_text.get(verst_str),
-            'text_eng': eng_text.get(verst_str),
+            'text_kor': f"{verse_str}. {kor_text.get(verse_str)}",
+            'text_eng': f"{verse_str}. {eng_text.get(verse_str)}",
         }
         text_list.append(curr_text)
     bible_text['text_list'] = text_list
